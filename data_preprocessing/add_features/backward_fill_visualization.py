@@ -8,48 +8,29 @@ import numpy as np
 def create_simplified_example():
     """Create a simplified visualization with synthetic but realistic data patterns."""
 
-    # Read real patient data to get realistic patterns
-    df_biochem = pd.read_csv(
-        "data/T1DiabetesGranada/Biochemical_parameters_corrected.csv"
-    )
-    df_biochem["Timestamp"] = pd.to_datetime(df_biochem["Timestamp"])
-
-    # Get a real patient with biochemical data
-    patient_with_data = df_biochem[df_biochem["HbA1c"].notna()].head(1)
-    if patient_with_data.empty:
-        print("No patient with HbA1c data found")
-        return
-
-    real_patient_id = patient_with_data.iloc[0]["Patient_ID"]
-    print(
-        f"Creating visualization based on real patient patterns from Patient {real_patient_id}"
-    )
-
     # Create realistic synthetic data for clear visualization
     base_date = datetime(2020, 1, 1)
 
-    # Biochemical measurements (sparse, like real data)
+    # Biochemical measurements (sparse, like real data) - REDUCED TO 2 MEASUREMENTS
     biochem_dates = [
-        base_date + timedelta(days=0),  # Jan 1
-        base_date + timedelta(days=90),  # Apr 1
-        base_date + timedelta(days=180),  # Jul 1
-        base_date + timedelta(days=270),  # Sep 27
+        base_date + timedelta(days=20),  # Jan 21
+        base_date + timedelta(days=60),  # Mar 1
     ]
-    biochem_values = [7.2, 6.8, 6.5, 7.1]  # HbA1c values
+    biochem_values = [7.2, 6.8]  # HbA1c values
 
-    # Generate realistic glucose time series with 15-minute intervals
+    # Generate realistic glucose time series - REDUCED FREQUENCY AND TIME WINDOW
     glucose_dates = []
     glucose_values = []
 
-    # Define the overall time range (1 year)
-    start_date = base_date - timedelta(days=30)
-    end_date = base_date + timedelta(days=365)
+    # Define the overall time range - REDUCED TO 3 MONTHS
+    start_date = base_date
+    end_date = base_date + timedelta(days=90)
 
-    # Generate continuous glucose measurements every 15 minutes
+    # Generate glucose measurements every 4 hours for even fewer points
     current_time = start_date
-    base_glucose = 120  # Base glucose level
-    daily_pattern_amplitude = 30  # Daily glucose variation
-    noise_level = 15  # Random noise
+    base_glucose = 130  # Base glucose level
+    daily_pattern_amplitude = 25  # Daily glucose variation
+    noise_level = 12  # Random noise
 
     # Simulate realistic daily glucose patterns
     while current_time <= end_date:
@@ -70,21 +51,21 @@ def create_simplified_example():
             + np.random.normal(0, noise_level) * weekly_factor
         )
 
-        # Ensure realistic glucose range (70-250 mg/dL)
-        glucose_value = max(70, min(250, glucose_value))
+        # Ensure realistic glucose range (80-220 mg/dL)
+        glucose_value = max(80, min(220, glucose_value))
 
         glucose_dates.append(current_time)
         glucose_values.append(glucose_value)
 
-        # Move to next 15-minute interval
-        current_time += timedelta(minutes=15)
+        # Move to next 4-hour interval
+        current_time += timedelta(hours=4)
 
     # Create DataFrames
     df_biochem_viz = pd.DataFrame(
         {
             "Timestamp": biochem_dates,
             "HbA1c": biochem_values,
-            "Patient_ID": [real_patient_id] * len(biochem_dates),
+            "Patient_ID": ["P001"] * len(biochem_dates),
         }
     )
 
@@ -92,7 +73,7 @@ def create_simplified_example():
         {
             "Timestamp": glucose_dates,
             "Measurement": glucose_values,
-            "Patient_ID": [real_patient_id] * len(glucose_dates),
+            "Patient_ID": ["P001"] * len(glucose_dates),
         }
     )
 
@@ -100,7 +81,160 @@ def create_simplified_example():
     df_glucose_viz = df_glucose_viz.sort_values("Timestamp").reset_index(drop=True)
     df_biochem_viz = df_biochem_viz.sort_values("Timestamp").reset_index(drop=True)
 
-    # Perform backward merge
+    # Create visualization - Single combined plot with larger size for thesis
+    # fig, ax = plt.subplots(1, 1, figsize=(14, 8))
+    fig, ax = plt.subplots(1, 1, figsize=(14, 8))
+
+    # Create secondary y-axis for HbA1c
+    ax2 = ax.twinx()
+
+    # Plot biochemical measurements with 30-day forward tolerance windows FIRST
+    tolerance_windows = []
+    for idx, row in df_biochem_viz.iterrows():
+        # Draw the tolerance window
+        start_window = row["Timestamp"]
+        end_window = row["Timestamp"] + pd.Timedelta(days=30)
+        tolerance_windows.append((start_window, end_window))
+
+        # Fill the tolerance window with visible color
+        ax.axvspan(
+            start_window,
+            end_window,
+            alpha=0.5,
+            color="papayawhip",
+            zorder=1,
+        )
+
+        # Draw vertical line at biochemical measurement
+        ax.axvline(
+            x=row["Timestamp"],
+            color="darkred",
+            linestyle="--",
+            alpha=1.0,
+            linewidth=4,
+            zorder=3,
+        )
+
+    # Plot HbA1c measurements on secondary axis - RED SQUARES WITHOUT ANNOTATIONS
+    ax2.scatter(
+        df_biochem_viz["Timestamp"],
+        df_biochem_viz["HbA1c"],
+        color="orangered",
+        alpha=1.0,
+        s=400,  # Large size
+        marker="s",
+        edgecolors="darkred",
+        linewidth=3,
+        zorder=4,
+    )
+
+    # Plot glucose time series with different colors inside/outside tolerance windows
+    for i in range(len(df_glucose_viz)):
+        timestamp = df_glucose_viz.iloc[i]["Timestamp"]
+        measurement = df_glucose_viz.iloc[i]["Measurement"]
+
+        # Check if this point is inside any tolerance window
+        inside_window = False
+        for start_window, end_window in tolerance_windows:
+            if start_window <= timestamp <= end_window:
+                inside_window = True
+                break
+
+        # Plot single point with appropriate color and alpha
+        if inside_window:
+            color = "darkblue"
+            alpha = 1.0
+            linewidth = 3
+        else:
+            color = "lightblue"
+            alpha = 0.5
+            linewidth = 2
+
+        # Plot the point and connect to previous if exists
+        if i > 0:
+            prev_timestamp = df_glucose_viz.iloc[i - 1]["Timestamp"]
+            prev_measurement = df_glucose_viz.iloc[i - 1]["Measurement"]
+
+            # Check if previous point was inside window too
+            prev_inside = False
+            for start_window, end_window in tolerance_windows:
+                if start_window <= prev_timestamp <= end_window:
+                    prev_inside = True
+                    break
+
+            # Draw line segment with appropriate color
+            if inside_window and prev_inside:
+                line_color = "darkblue"
+                line_alpha = 1.0
+                line_width = 2.5
+            elif not inside_window and not prev_inside:
+                line_color = "steelblue"
+                line_alpha = 0.8
+                line_width = 2
+            else:
+                # Transition point - use darker color
+                line_color = "darkblue"
+                line_alpha = 0.7
+                line_width = 2.5
+
+            ax.plot(
+                [prev_timestamp, timestamp],
+                [prev_measurement, measurement],
+                color=line_color,
+                alpha=line_alpha,
+                linewidth=line_width,
+                zorder=2,
+            )
+
+        # Plot the marker
+        ax.plot(
+            timestamp,
+            measurement,
+            marker="o",
+            markersize=3,
+            color=color,
+            alpha=alpha,
+            zorder=2,
+        )
+
+    # Set labels and formatting - larger fonts
+    ax.set_xlabel("Tempo", fontsize=18, fontweight="bold")
+    ax.set_ylabel("Glucosio (mg/dL)", fontsize=18, fontweight="bold", color="darkblue")
+    ax2.set_ylabel("HbA1c (%)", fontsize=18, fontweight="bold", color="darkred")
+
+    # Set y-axis limits for better visibility
+    ax.set_ylim(70, 200)
+    ax2.set_ylim(6.5, 7.5)
+
+    # Color the y-axis labels - larger fonts
+    ax.tick_params(axis="y", labelsize=14, width=2)
+    ax2.tick_params(axis="y", labelsize=14, width=2)
+    ax.tick_params(axis="x", labelsize=14, width=2)
+
+    # Grid
+    ax.grid(True, alpha=0.3, linewidth=1.5)
+
+    # Format x-axis - SHOW DATES
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%b %Y"))
+    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=0, ha="center", fontsize=14)
+
+    # Add border around the plot
+    for spine in ax.spines.values():
+        spine.set_linewidth(2)
+    for spine in ax2.spines.values():
+        spine.set_linewidth(2)
+
+    plt.tight_layout()
+
+    # Save the plot with high quality for thesis
+    output_path = "plots/backward_fill_thesis_visualization.png"
+    plt.savefig(
+        output_path, dpi=300, bbox_inches="tight", facecolor="white", edgecolor="black"
+    )
+    print(f"\n✅ Visualizzazione per tesi salvata come: {output_path}")
+
+    # Calculate statistics
     merged_data = pd.merge_asof(
         df_glucose_viz,
         df_biochem_viz[["Timestamp", "HbA1c"]],
@@ -109,155 +243,19 @@ def create_simplified_example():
         tolerance=pd.Timedelta(days=30),
     )
 
-    # Create visualization - Single combined plot
-    fig, ax = plt.subplots(1, 1, figsize=(20, 12))
-    fig.suptitle(
-        f"Processo di Backward Fill - Finestra di Tolleranza di 30 Giorni\n"
-        + f"Time Series Glucosio (15 min) + Parametri Biochimici (Patient {real_patient_id})",
-        fontsize=18,
-        fontweight="bold",
-    )
-
-    # Plot glucose time series as a continuous line
-    ax.plot(
-        df_glucose_viz["Timestamp"],
-        df_glucose_viz["Measurement"],
-        color="steelblue",
-        alpha=0.7,
-        linewidth=1,
-        label="Time Series Glucosio (15 min)",
-        zorder=1,
-    )
-
-    # Highlight successful and failed matches
     successful_matches = merged_data.dropna()
     failed_matches = merged_data[merged_data["HbA1c"].isna()]
 
-    # Plot successful matches as green points
-    if not successful_matches.empty:
-        ax.plot(
-            successful_matches["Timestamp"],
-            successful_matches["Measurement"],
-            color="darkblue",
-            alpha=0.8,
-            # s=20,
-            label=f"Match con HbA1c ({len(successful_matches)} punti)",
-            zorder=3,
-        )
-
-    # # Plot failed matches as red points
-    # if not failed_matches.empty:
-    #     ax.scatter(
-    #         failed_matches["Timestamp"],
-    #         failed_matches["Measurement"],
-    #         color="red",
-    #         alpha=0.6,
-    #         s=15,
-    #         label=f"Senza match ({len(failed_matches)} punti)",
-    #         zorder=2,
-    #     )
-
-    # Create secondary y-axis for HbA1c
-    ax2 = ax.twinx()
-
-    # Plot biochemical measurements with 30-day forward tolerance windows
-    for idx, row in df_biochem_viz.iterrows():
-        # Draw the tolerance window
-        start_window = row["Timestamp"]
-        end_window = row["Timestamp"] + pd.Timedelta(days=30)
-
-        # Fill the tolerance window
-        ax.axvspan(
-            start_window,
-            end_window,
-            alpha=0.1,
-            color="orange",
-            zorder=0,
-            label="Finestra 30 giorni" if idx == 0 else "",
-        )
-
-        # Draw vertical line at biochemical measurement
-        ax.axvline(
-            x=row["Timestamp"],
-            color="darkred",
-            linestyle="--",
-            alpha=0.7,
-            linewidth=2,
-            zorder=4,
-        )
-
-    # Plot HbA1c measurements on secondary axis
-    ax2.scatter(
-        df_biochem_viz["Timestamp"],
-        df_biochem_viz["HbA1c"],
-        color="orangered",
-        alpha=1.0,
-        s=200,
-        marker="s",
-        edgecolors="darkred",
-        linewidth=2,
-        label="Misurazioni HbA1c",
-        zorder=5,
+    return (
+        merged_data,
+        len(df_glucose_viz),
+        len(successful_matches),
+        len(failed_matches),
     )
-
-    # Add annotations for HbA1c values
-    for idx, row in df_biochem_viz.iterrows():
-        ax2.annotate(
-            f'HbA1c: {row["HbA1c"]:.1f}%\n{row["Timestamp"].strftime("%Y-%m-%d")}',
-            xy=(row["Timestamp"], row["HbA1c"]),
-            xytext=(10, 20),
-            textcoords="offset points",
-            fontsize=11,
-            fontweight="bold",
-            bbox=dict(boxstyle="round,pad=0.4", facecolor="yellow", alpha=0.8),
-            arrowprops=dict(arrowstyle="->", color="red", alpha=0.7),
-            zorder=6,
-        )
-
-    # Set labels and formatting
-    ax.set_xlabel("Data", fontsize=14, fontweight="bold")
-    ax.set_ylabel("Glucosio (mg/dL)", fontsize=14, fontweight="bold", color="darkblue")
-    ax2.set_ylabel("HbA1c (%)", fontsize=14, fontweight="bold", color="firebrick")
-
-    # Set y-axis limits
-    ax.set_ylim(60, 250)
-    ax2.set_ylim(6, 8)
-
-    # Color the y-axis labels
-    ax.tick_params(axis="y", labelcolor="darkblue")
-    ax2.tick_params(axis="y", labelcolor="firebrick")
-
-    # Grid and legend
-    ax.grid(True, alpha=0.3)
-
-    # Combine legends from both axes
-    lines1, labels1 = ax.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax.legend(lines1 + lines2, labels1 + labels2, loc="upper left", fontsize=12)
-
-    # Format x-axis
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
-    ax.xaxis.set_major_locator(mdates.MonthLocator())
-    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha="right")
-
-    plt.tight_layout()
-
-    # Add detailed explanation text box
-    total_glucose = len(df_glucose_viz)
-    successful_merges = len(successful_matches)
-    failed_merges = len(failed_matches)
-    merge_rate = (successful_merges / total_glucose) * 100
-
-    # Save the plot
-    output_path = "plots/backward_fill_combined_visualization.png"
-    plt.savefig(output_path, dpi=300, bbox_inches="tight", facecolor="white")
-    print(f"\n✅ Visualizzazione combinata salvata come: {output_path}")
-
-    return merged_data, total_glucose, successful_merges, failed_merges
 
 
 if __name__ == "__main__":
-    print("🔄 CREAZIONE VISUALIZZAZIONE DETTAGLIATA DEL BACKWARD FILL")
+    print("🔄 CREAZIONE VISUALIZZAZIONE SEMPLIFICATA PER TESI")
     print("=" * 60)
 
     try:
@@ -265,16 +263,18 @@ if __name__ == "__main__":
         if result:
             merged_data, total_glucose, successful_merges, failed_merges = result
 
-            print("\n✅ Visualizzazione combinata completata!")
-            print("Controlla il file 'backward_fill_combined_visualization.png'")
+            print("\n✅ Visualizzazione per tesi completata!")
+            print("Controlla il file 'backward_fill_thesis_visualization.png'")
             print(f"\nStatistiche:")
-            print(f"- Misurazioni glucosio totali: {total_glucose:,} (ogni 15 minuti)")
+            print(f"- Misurazioni glucosio totali: {total_glucose:,} (ogni 4 ore)")
+            print(f"- Periodo: 3 mesi")
+            print(f"- Misurazioni HbA1c: 2")
             print(
                 f"- Match riusciti: {successful_merges:,} ({successful_merges/total_glucose*100:.1f}%)"
             )
-            print(
-                f"- Match falliti: {failed_merges:,} ({failed_merges/total_glucose*100:.1f}%)"
-            )
+            # print(
+            #     f"- Match falliti: {failed_matches:,} ({failed_matches/total_glucose*100:.1f}%)"
+            # )
         else:
             print("❌ Errore nella creazione della visualizzazione")
 

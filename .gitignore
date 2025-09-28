@@ -6,3 +6,5 @@ scores
 plots
 results
 models
+shap_analysis
+plots_generation

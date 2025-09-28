@@ -145,24 +145,25 @@ def _create_clarke_error_grid_plot(ref_values, pred_values, title_string, save_p
     save_path : str
         Path to save the plot
     """
-    plt.figure(figsize=(8, 8), dpi=300)
+    # plt.figure(figsize=(8, 8), dpi=300)
+    plt.figure(dpi=300)
 
     # Plot data points
     plt.scatter(
         ref_values,
         pred_values,
         marker="o",
-        color="navy",
+        color="steelblue",
         s=12,
-        alpha=0.6,
+        # alpha=0.6,
         edgecolors="black",
         linewidth=0.1,
     )
 
     # Set labels and title
-    plt.title(title_string + " Clarke Error Grid", fontsize=16, fontweight="bold")
-    plt.xlabel("Reference Concentration (mg/dl)", fontsize=14)
-    plt.ylabel("Prediction Concentration (mg/dl)", fontsize=14)
+    # plt.title(title_string + " Clarke Error Grid", fontsize=16, fontweight="bold")
+    plt.xlabel("Concentrazione di riferimento (mg/dL)", fontsize=14)
+    plt.ylabel("Concentrazione inferita (mg/dL)", fontsize=14)
 
     # Add perfect prediction line
     plt.plot(

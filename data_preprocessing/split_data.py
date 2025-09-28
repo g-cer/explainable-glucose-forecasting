@@ -130,6 +130,12 @@ def print_split_info(df, train_idx, val_idx, test_idx):
     proportions = [len(idx) / total for idx in [train_idx, val_idx, test_idx]]
     print(f"Split proportions (rows): {proportions}")
 
+    # Print number of patients in each set
+    print("Number of patients by set:")
+    for name, idx in [("Train", train_idx), ("Val", val_idx), ("Test", test_idx)]:
+        unique_patients = df.loc[idx, "Patient_ID"].nunique()
+        print(f"  {name:<5}: {unique_patients} patients")
+
     print("Class distributions by set:")
     for name, idx in [("Train", train_idx), ("Val", val_idx), ("Test", test_idx)]:
         props = report_props(df, idx)

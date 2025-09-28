@@ -87,7 +87,7 @@ def generate_clarke_plots_and_stats(output_path, plots_path, scores_path):
             ceg_stats = clarke_error_grid_analysis(
                 ref_values=ref_values,
                 pred_values=pred_values,
-                title_string=f"{model_name} Test Set",
+                title_string=f"{model_name}",
                 save_path=plot_path,
             )
 

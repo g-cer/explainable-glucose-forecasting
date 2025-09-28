@@ -38,11 +38,11 @@ def analyze_feature_importance(model, X_cols, plots_dir):
     # Categorize features
     def categorize_feature(feature):
         if feature.startswith("lag"):
-            return "Glucose Lag"
+            return "Lag Glicemiche"
         elif feature in ["Sex", "Age"]:
-            return "Demographics"
+            return "Demografiche"
         elif feature in ["HbA1c", "TSH", "Creatinine", "HDL", "Triglycerides"]:
-            return "Biochemical"
+            return "Biochimiche"
         else:
             return "Other"
 
@@ -78,90 +78,104 @@ def create_feature_importance_plots(importance_df, category_importance, plots_di
     plt.style.use("default")
     sns.set_palette("husl")
 
-    # Create a single figure for the feature importance plot
-    fig, ax1 = plt.subplots(figsize=(12, 10))
+    # Create category comparison plot with closer bars
+    fig2, ax = plt.subplots(
+        figsize=(9.5, 3)
+    )  # Made slightly smaller for better proportion
 
-    # 1. Top 15 Individual Features
-    top_features = importance_df.head(15)
-    colors = [
-        (
-            "#1f77b4"
-            if cat == "Glucose Lag"
-            else "#ff7f0e" if cat == "Biochemical" else "#2ca02c"
+    # Prepare data for categorical comparison
+    categories = ["Demografiche", "Biochimiche", "Lag Glicemiche"]
+    category_totals = []
+    # Use softer, more muted colors
+    category_colors = [
+        "#90C695",
+        "#F4A460",
+        "#87CEEB",
+    ]  # Softer green, sand brown, light blue
+
+    for cat in categories:
+        if cat in category_importance.index:
+            category_totals.append(category_importance.loc[cat, "sum"])
+        else:
+            category_totals.append(0)
+
+    # Create normalized values for visual clarity (not maintaining real proportions)
+    # Use log scale or square root to compress the range
+    import numpy as np
+
+    normalized_values = np.sqrt(category_totals)  # Square root normalization
+
+    # Create positions for bars to be closer together
+    bar_positions = np.arange(len(categories))
+
+    # Create horizontal bar chart with thinner bars and closer spacing
+    bars = ax.barh(
+        bar_positions,
+        normalized_values,
+        color=category_colors,
+        alpha=0.8,  # Slightly increased alpha for better visibility with softer colors
+        edgecolor="black",  # Changed to gray for softer appearance
+        linewidth=0.8,  # Reduced line width
+        # height=0.35,  # Increased height to make bars thicker and closer
+    )
+
+    # Set y-axis properties for closer spacing
+    ax.set_yticks(bar_positions)
+    # ax.set_ylim(-0.4, len(categories) - 0.6)  # Reduced margins to bring bars closer
+
+    ax.set_xlim(0, max(normalized_values) * 1.15)  # Adjusted x-limit
+    ax.set_yticklabels(categories, fontsize=14)  # Increased font size
+
+    ax.set_xlabel(
+        "Feature Importance (Normalizzata per chiarezza visiva)", fontsize=14
+    )  # Increased font size
+    # ax.set_xlabel("", fontsize=14)  # Increased font size
+    ax.grid(True, alpha=0.2, axis="x", color="lightgray")  # Softer grid
+
+    # Increase tick label font size
+    ax.tick_params(axis="x", labelsize=12)
+
+    # Add actual values and percentages on bars with larger font
+    total_importance = sum(category_totals)
+    for i, (bar, actual_val, norm_val) in enumerate(
+        zip(bars, category_totals, normalized_values)
+    ):
+        percentage = (
+            (actual_val / total_importance * 100) if total_importance > 0 else 0
         )
-        for cat in top_features["category"]
-    ]
-
-    bars1 = ax1.barh(range(len(top_features)), top_features["importance"], color=colors)
-    ax1.set_yticks(range(len(top_features)))
-    ax1.set_yticklabels(top_features["feature"])
-    ax1.set_xlabel("Feature Importance (Gain)")
-    ax1.set_title("Top 15 Most Important Features", fontsize=14, fontweight="bold")
-    ax1.grid(True, alpha=0.3)
-
-    # Add values on bars
-    for i, (bar, val) in enumerate(zip(bars1, top_features["importance"])):
-        ax1.text(
-            val + 0.001,
+        ax.text(
+            norm_val + max(normalized_values) * 0.02,
             bar.get_y() + bar.get_height() / 2,
-            f"{val:.3f}",
+            f"({percentage:.1f}%)",
             va="center",
-            fontsize=9,
+            # fontweight="bold",
+            fontsize=14,  # Increased from 11 to 14
+            # color="darkslategray",  # Softer text color
         )
 
     plt.tight_layout()
 
-    # Save plot
-    plot_path = f"{plots_dir}/xgb_static_feature_importance.png"
-    plt.savefig(plot_path, dpi=300, bbox_inches="tight")
+    # Save category comparison plot as both PNG and PDF
+    category_plot_path_png = f"{plots_dir}/xgb_category_importance_comparison.png"
+    category_plot_path_pdf = f"{plots_dir}/xgb_category_importance_comparison.pdf"
+
+    plt.savefig(category_plot_path_png, dpi=300, bbox_inches="tight")
+    plt.savefig(category_plot_path_pdf, dpi=300, bbox_inches="tight", format="pdf")
     plt.show()
 
-    print(f"✓ Feature importance plot saved to: {plot_path}")
+    print(f"✓ Category comparison plot saved to: {category_plot_path_png}")
+    print(f"✓ Category comparison plot (PDF) saved to: {category_plot_path_pdf}")
 
-    # Create a summary table plot
-    fig2, ax = plt.subplots(figsize=(12, 8))
-
-    # Create biochemical features comparison
-    biochemical_features = importance_df[
-        importance_df["category"] == "Biochemical"
-    ].copy()
-    if not biochemical_features.empty:
-        biochemical_features = biochemical_features.sort_values(
-            "importance", ascending=True
+    # Print summary statistics
+    print(f"\n📊 Category Importance Summary:")
+    for cat, total, color in zip(categories, category_totals, category_colors):
+        percentage = (total / total_importance * 100) if total_importance > 0 else 0
+        count = (
+            category_importance.loc[cat, "count"]
+            if cat in category_importance.index
+            else 0
         )
-
-        bars = ax.barh(
-            range(len(biochemical_features)),
-            biochemical_features["importance"],
-            color="#ff7f0e",
-            alpha=0.7,
-        )
-        ax.set_yticks(range(len(biochemical_features)))
-        ax.set_yticklabels(biochemical_features["feature"])
-        ax.set_xlabel("Feature Importance (Gain)")
-        ax.set_title(
-            "Biochemical Features Importance Ranking", fontsize=16, fontweight="bold"
-        )
-        ax.grid(True, alpha=0.3)
-
-        # Add values on bars
-        for i, (bar, val) in enumerate(zip(bars, biochemical_features["importance"])):
-            ax.text(
-                val + max(biochemical_features["importance"]) * 0.01,
-                bar.get_y() + bar.get_height() / 2,
-                f"{val:.4f}",
-                va="center",
-                fontweight="bold",
-            )
-
-    plt.tight_layout()
-
-    # Save biochemical plot
-    biochemical_plot_path = f"{plots_dir}/xgb_biochemical_features_importance.png"
-    plt.savefig(biochemical_plot_path, dpi=300, bbox_inches="tight")
-    plt.show()
-
-    print(f"✓ Biochemical features plot saved to: {biochemical_plot_path}")
+        print(f"   • {cat:<15}: {total:.4f} ({percentage:.1f}%) - {count} features")
 
 
 def main():
@@ -206,13 +220,13 @@ def main():
     print(f"\n🎉 XGBoost training with static features completed successfully!")
     print(f"\n📊 Key Insights:")
     glucose_importance = (
-        category_importance.loc["Glucose Lag", "sum"]
-        if "Glucose Lag" in category_importance.index
+        category_importance.loc["Lag Glicemiche", "sum"]
+        if "Lag Glicemiche" in category_importance.index
         else 0
     )
     biochemical_importance = (
-        category_importance.loc["Biochemical", "sum"]
-        if "Biochemical" in category_importance.index
+        category_importance.loc["Biochimiche", "sum"]
+        if "Biochimiche" in category_importance.index
         else 0
     )
     total_importance = category_importance["sum"].sum()
@@ -221,10 +235,10 @@ def main():
         f"   • Glucose lag features contribute {glucose_importance/total_importance*100:.1f}% of total importance"
     )
     print(
-        f"   • Biochemical features contribute {biochemical_importance/total_importance*100:.1f}% of total importance"
+        f"   • Biochimiche features contribute {biochemical_importance/total_importance*100:.1f}% of total importance"
     )
     print(
-        f"   • Top biochemical feature: {importance_df[importance_df['category']=='Biochemical'].iloc[0]['feature'] if not importance_df[importance_df['category']=='Biochemical'].empty else 'None'}"
+        f"   • Top biochemical feature: {importance_df[importance_df['category']=='Biochimiche'].iloc[0]['feature'] if not importance_df[importance_df['category']=='Biochimiche'].empty else 'None'}"
     )
 
     return model, results, importance_df
