@@ -105,8 +105,25 @@ def identify_extreme_patients(gru_results_file):
         patient_metrics_df["MAE"].idxmax(), "Patient_ID"
     ]
 
+    # Ottieni le metriche per il migliore e peggiore paziente
+    best_patient_metrics = patient_metrics_df[
+        patient_metrics_df["Patient_ID"] == best_patient_id
+    ].iloc[0]
+    worst_patient_metrics = patient_metrics_df[
+        patient_metrics_df["Patient_ID"] == worst_patient_id
+    ].iloc[0]
+
     print(f"✓ Migliore paziente: {best_patient_id}")
+    print(f"  MAE: {best_patient_metrics['MAE']:.2f} mg/dL")
+    print(f"  MAPE: {best_patient_metrics['MAPE']:.2f}%")
+    print(f"  RMSE: {best_patient_metrics['RMSE']:.2f} mg/dL")
+    print(f"  Campioni: {best_patient_metrics['Samples']}")
+
     print(f"✓ Peggiore paziente: {worst_patient_id}")
+    print(f"  MAE: {worst_patient_metrics['MAE']:.2f} mg/dL")
+    print(f"  MAPE: {worst_patient_metrics['MAPE']:.2f}%")
+    print(f"  RMSE: {worst_patient_metrics['RMSE']:.2f} mg/dL")
+    print(f"  Campioni: {worst_patient_metrics['Samples']}")
 
     return int(best_patient_id), int(worst_patient_id)
 
