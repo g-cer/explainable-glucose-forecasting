@@ -11,7 +11,7 @@ import numpy as np
 import polars as pl
 import pandas as pd
 from sklearn.model_selection import StratifiedGroupKFold
-from utils.data import (
+from lib.data import (
     categorize_glucose,
     scale_data,
     print_dataset_info,

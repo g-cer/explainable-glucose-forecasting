@@ -2,8 +2,8 @@ import os
 import json
 import polars as pl
 import pandas as pd
-from utils.data import categorize_glucose, scale_data, print_dataset_info
-from data_preprocessing.split_data import (
+from lib.data import categorize_glucose, scale_data, print_dataset_info
+from lib.split_data import (
     stratified_group_train_val_test_split,
     validate_group_split,
     print_split_info,
