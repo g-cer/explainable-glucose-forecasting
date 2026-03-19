@@ -1,10 +1,19 @@
 import os
 import numpy as np
+import tensorflow as tf
 from tensorflow import keras
 from keras import layers
 
 SUPPORTED_MODELS = ["mlp", "lstm", "gru"]
 RNN_MODELS = ["lstm", "gru"]
+
+
+def set_seeds(seed):
+    """Set random seeds for reproducibility in TensorFlow/Keras."""
+    np.random.seed(seed)
+    tf.keras.backend.clear_session()
+    tf.random.set_seed(seed)
+    tf.keras.utils.set_random_seed(seed)
 
 
 def print_model_summary(model):
