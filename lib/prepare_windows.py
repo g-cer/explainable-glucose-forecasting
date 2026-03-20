@@ -137,7 +137,7 @@ def create_windowed_features(cgm_data, patient_id, horizons=HORIZONS):
 
 
 def save_static_splits(
-    train_set, val_set, test_set, X_cols, y_cols, output_dir="data/static_split_sets"
+    train_set, val_set, test_set, X_cols, y_cols, output_dir=None
 ):
     """Save datasets and metadata to files in the static splits directory.
 
@@ -147,6 +147,10 @@ def save_static_splits(
         y_cols (list): Target column names
         output_dir (str): Output directory path
     """
+    if output_dir is None:
+        from lib.config import get_static_splits_dir
+        output_dir = get_static_splits_dir()
+
     os.makedirs(output_dir, exist_ok=True)
 
     # Save datasets
@@ -170,7 +174,7 @@ def save_static_splits(
 
 
 def prepare_static_windowed_data(
-    data_path="data/T1DiabetesGranada/Glucose_measurements_with_static.csv",
+    data_path=None,
     scale=True,
     horizons=HORIZONS,
 ):
@@ -184,6 +188,10 @@ def prepare_static_windowed_data(
     Returns:
         tuple: (train_set, val_set, test_set, X_cols, y_cols)
     """
+    if data_path is None:
+        from lib.config import get_raw_file
+        data_path = get_raw_file("Glucose_measurements_with_static.csv")
+
     print("🔄 PREPARING WINDOWED DATA WITH BIOCHEMICAL FEATURES")
     print("=" * 60)
 

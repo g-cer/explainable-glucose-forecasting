@@ -72,7 +72,7 @@ def rescale_data(df, rescale_cols):
     return df
 
 
-def load_splits(splits_dir="data/split_sets"):
+def load_splits(splits_dir=None):
     """Load datasets and metadata from files.
 
     Args:
@@ -81,6 +81,10 @@ def load_splits(splits_dir="data/split_sets"):
     Returns:
         tuple: (train_set, val_set, test_set, X_cols, y_cols)
     """
+    if splits_dir is None:
+        from lib.config import get_splits_dir
+        splits_dir = get_splits_dir()
+
     datasets = []
     for name in ["train", "val", "test"]:
         df = pd.read_parquet(f"{splits_dir}/{name}_set.parquet")

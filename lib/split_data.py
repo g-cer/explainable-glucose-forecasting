@@ -143,7 +143,7 @@ def print_split_info(df, train_idx, val_idx, test_idx):
 
 
 def save_splits(
-    train_set, val_set, test_set, X_cols, y_cols, output_dir="data/split_sets"
+    train_set, val_set, test_set, X_cols, y_cols, output_dir=None
 ):
     """Save datasets and metadata to files.
 
@@ -153,6 +153,10 @@ def save_splits(
         y_cols (list): Target column names
         output_dir (str): Output directory path (default: 'data/split_sets')
     """
+    if output_dir is None:
+        from lib.config import get_splits_dir
+        output_dir = get_splits_dir()
+
     os.makedirs(output_dir, exist_ok=True)
 
     # Save datasets
@@ -235,7 +239,7 @@ def load_transform(cgm_data, patient_id, horizons, shift_tolerance):
 
 
 def prepare_data(
-    horizons=None, scale=True, data_path="data/T1DiabetesGranada", shift_tolerance="1m"
+    horizons=None, scale=True, data_path=None, shift_tolerance="1m"
 ):
     """Simplified data preparation pipeline.
 
@@ -248,6 +252,10 @@ def prepare_data(
     Returns:
         tuple: (train_set, val_set, test_set, X_cols, y_cols)
     """
+    if data_path is None:
+        from lib.config import get_raw_data_dir
+        data_path = get_raw_data_dir()
+
     if horizons is None:
         horizons = HORIZONS
 

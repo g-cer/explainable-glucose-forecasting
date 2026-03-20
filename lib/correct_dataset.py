@@ -1,11 +1,12 @@
 import pandas as pd
+from lib.config import get_raw_file
 
 
 def process_patient_info():
     """Process patient information file."""
     print("Processing patient_info...")
 
-    df_patients = pd.read_csv("data/T1DiabetesGranada/Patient_info.csv")
+    df_patients = pd.read_csv(get_raw_file("Patient_info.csv"))
 
     # Extract patient ID as integer
     df_patients["Patient_ID"] = df_patients["Patient_ID"].str[-4:].astype(int)
@@ -24,7 +25,7 @@ def process_patient_info():
 
     # Select and save relevant columns
     df_patients = df_patients[["Patient_ID", "Sex", "Age"]]
-    df_patients.to_csv("data/T1DiabetesGranada/Patient_info_corrected.csv", index=False)
+    df_patients.to_csv(get_raw_file("Patient_info_corrected.csv"), index=False)
     print("✓ Patient info file processed")
 
 
@@ -32,7 +33,7 @@ def process_biochemical_parameters():
     """Process biochemical parameters file."""
     print("Processing biochemical parameters...")
 
-    df_biochem = pd.read_csv("data/T1DiabetesGranada/Biochemical_parameters.csv")
+    df_biochem = pd.read_csv(get_raw_file("Biochemical_parameters.csv"))
 
     # Extract patient ID as integer
     df_biochem["Patient_ID"] = df_biochem["Patient_ID"].str[-4:].astype(int)
@@ -73,7 +74,7 @@ def process_biochemical_parameters():
     ]
 
     df_biochem.to_csv(
-        "data/T1DiabetesGranada/Biochemical_parameters_corrected.csv", index=False
+        get_raw_file("Biochemical_parameters_corrected.csv"), index=False
     )
     print("✓ Biochemical parameters file processed")
 

@@ -163,7 +163,8 @@ def main():
 
     try:
         # Load data
-        df_glucose = load_data("data/T1DiabetesGranada/Glucose_measurements.csv")
+        from lib.config import get_raw_file
+        df_glucose = load_data(get_raw_file("Glucose_measurements.csv"))
 
         # Rimuovi valori di Measurement fuori dal range [40, 400] e stampa quanti sono stati rimossi
         df_glucose = remove_out_of_range_measurements(df_glucose)
@@ -187,7 +188,7 @@ def main():
         # Save results
         save_preprocessed_data(
             preprocessed_data,
-            "data/T1DiabetesGranada/Glucose_measurements_corrected.csv",
+            get_raw_file("Glucose_measurements_corrected.csv"),
         )
 
         # Print final statistics

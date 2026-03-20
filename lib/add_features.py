@@ -1,4 +1,5 @@
 import pandas as pd
+from lib.config import get_raw_file
 
 
 def load_datasets():
@@ -6,13 +7,9 @@ def load_datasets():
     print("Loading datasets...")
 
     # Load corrected datasets
-    df_patients = pd.read_csv("data/T1DiabetesGranada/Patient_info_corrected.csv")
-    df_glucose = pd.read_csv(
-        "data/T1DiabetesGranada/Glucose_measurements_corrected.csv"
-    )
-    df_biochem = pd.read_csv(
-        "data/T1DiabetesGranada/Biochemical_parameters_corrected.csv"
-    )
+    df_patients = pd.read_csv(get_raw_file("Patient_info_corrected.csv"))
+    df_glucose = pd.read_csv(get_raw_file("Glucose_measurements_corrected.csv"))
+    df_biochem = pd.read_csv(get_raw_file("Biochemical_parameters_corrected.csv"))
 
     # Convert timestamp columns to datetime
     df_glucose["Timestamp"] = pd.to_datetime(df_glucose["Timestamp"])
@@ -120,7 +117,7 @@ if __name__ == "__main__":
     # Save the enriched dataset
     save_final_dataset(
         final_dataset,
-        "data/T1DiabetesGranada/Glucose_measurements_with_static.csv",
+        get_raw_file("Glucose_measurements_with_static.csv"),
     )
 
     print("\n✅ Feature addition completed!")
