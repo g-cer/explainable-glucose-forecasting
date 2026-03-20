@@ -1,9 +1,4 @@
-"""
-Script di esempio per recuperare parametri ottimali da studi Optuna salvati.
-
-Questo script mostra come caricare gli studi Optuna salvati dal unified_tuning.py
-e recuperare i parametri ottimali per uso futuro.
-"""
+"""Recupero e analisi dei parametri ottimali da studi Optuna salvati."""
 
 import pickle
 import pandas as pd
@@ -11,14 +6,21 @@ import os
 
 
 def load_and_analyze_study(model_name, results_dir="tuning/results"):
-    """Carica e analizza uno studio Optuna salvato."""
+    """Carica e analizza uno studio Optuna salvato.
+
+    Args:
+        model_name: Nome del modello (es. 'xgb', 'lgb').
+        results_dir: Directory dei risultati.
+
+    Returns:
+        Oggetto Study di Optuna, o None se non trovato.
+    """
     study_path = f"{results_dir}/{model_name}_optuna_study.pkl"
 
     if not os.path.exists(study_path):
         print(f"❌ Studio non trovato: {study_path}")
         return None
 
-    # Carica lo studio
     with open(study_path, "rb") as f:
         study = pickle.load(f)
 
@@ -26,13 +28,11 @@ def load_and_analyze_study(model_name, results_dir="tuning/results"):
     print(f"ANALISI STUDIO OPTUNA - {model_name.upper()}")
     print(f"{'='*60}")
 
-    # Informazioni di base
     print(f"Nome studio: {study.study_name}")
     print(f"Numero trials: {len(study.trials)}")
     print(f"Migliore MAE: {study.best_value:.4f}")
     print(f"Numero trial migliore: {study.best_trial.number}")
 
-    # Parametri ottimali
     print(f"\nPARAMETRI OTTIMALI:")
     for param, value in study.best_params.items():
         if isinstance(value, float):
@@ -40,7 +40,6 @@ def load_and_analyze_study(model_name, results_dir="tuning/results"):
         else:
             print(f"  {param}: {value}")
 
-    # Statistiche sui trials
     trials_df = study.trials_dataframe()
     print(f"\nSTATISTICHE TRIALS:")
     print(f"  MAE medio: {trials_df['value'].mean():.4f}")
@@ -48,7 +47,6 @@ def load_and_analyze_study(model_name, results_dir="tuning/results"):
     print(f"  MAE minimo: {trials_df['value'].min():.4f}")
     print(f"  MAE massimo: {trials_df['value'].max():.4f}")
 
-    # Top 5 trials
     print(f"\nTOP 5 TRIALS:")
     top_trials = trials_df.nsmallest(5, "value")[["number", "value"]]
     for idx, row in top_trials.iterrows():
@@ -58,7 +56,11 @@ def load_and_analyze_study(model_name, results_dir="tuning/results"):
 
 
 def compare_models(results_dir="tuning/results"):
-    """Confronta i risultati di tutti i modelli disponibili."""
+    """Confronta i risultati di tutti i modelli disponibili.
+
+    Args:
+        results_dir: Directory dei risultati.
+    """
     models = []
 
     for model_name in ["xgb", "lgb"]:
@@ -84,7 +86,6 @@ def compare_models(results_dir="tuning/results"):
         df = pd.DataFrame(models)
         print(df.to_string(index=False))
 
-        # Trova il migliore
         best_model = min(models, key=lambda x: float(x["Best MAE"]))
         print(
             f"\n🏆 MODELLO MIGLIORE: {best_model['Modello']} con MAE = {best_model['Best MAE']}"
@@ -94,15 +95,13 @@ def compare_models(results_dir="tuning/results"):
 
 
 def main():
-    """Funzione principale di esempio."""
+    """Funzione principale."""
     print("ANALISI STUDI OPTUNA SALVATI")
     print("=" * 80)
 
-    # Analizza tutti i modelli disponibili
     for model_name in ["xgb", "lgb"]:
         study = load_and_analyze_study(model_name)
 
-    # Confronta tutti i modelli
     compare_models()
 
     print(f"\n{'='*80}")

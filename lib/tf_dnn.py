@@ -9,7 +9,7 @@ RNN_MODELS = ["lstm", "gru"]
 
 
 def set_seeds(seed):
-    """Set random seeds for reproducibility in TensorFlow/Keras."""
+    """Imposta i seed per la riproducibilità in TensorFlow/Keras."""
     np.random.seed(seed)
     tf.keras.backend.clear_session()
     tf.random.set_seed(seed)
@@ -17,14 +17,14 @@ def set_seeds(seed):
 
 
 def print_model_summary(model):
-    """Print model architecture and parameter count"""
+    """Stampa l'architettura del modello e il numero di parametri."""
     print("\nModel Architecture:")
     model.summary()
     print(f"\nTotal parameters: {model.count_params():,}")
 
 
 def create_model(model_type):
-    """Create model based on type with unified interface"""
+    """Crea un modello in base al tipo specificato."""
     if model_type not in SUPPORTED_MODELS:
         raise ValueError(f"Model type must be one of {SUPPORTED_MODELS}")
 
@@ -37,7 +37,7 @@ def create_model(model_type):
 
 
 def create_mlp_model():
-    """Create MLP model"""
+    """Crea il modello MLP."""
     return keras.Sequential(
         [
             layers.Input(shape=(8,)),
@@ -52,7 +52,7 @@ def create_mlp_model():
 
 
 def create_lstm_model():
-    """Create LSTM model"""
+    """Crea il modello LSTM."""
     return keras.Sequential(
         [
             layers.Input(shape=(8, 1)),
@@ -66,7 +66,7 @@ def create_lstm_model():
 
 
 def create_gru_model():
-    """Create GRU model"""
+    """Crea il modello GRU."""
     return keras.Sequential(
         [
             layers.Input(shape=(8, 1)),
@@ -80,23 +80,19 @@ def create_gru_model():
 
 
 def prepare_data(train_set, val_set, test_set, X_cols, y_cols, model_type):
-    """Prepare data for training with simplified logic"""
+    """Prepara i dati per l'addestramento, con reshape automatico per RNN."""
     if model_type not in SUPPORTED_MODELS:
         raise ValueError(f"Model type must be one of {SUPPORTED_MODELS}")
 
-    # Extract and convert data in one step
     datasets = [train_set, val_set, test_set]
     X_arrays = [df[X_cols].values.astype(np.float32) for df in datasets]
     y_arrays = [df[y_cols].values.astype(np.float32) for df in datasets]
 
-    # Ensure targets are 1D
     y_arrays = [_ensure_1d(y) for y in y_arrays]
 
-    # Reshape for RNN models if needed
     if model_type in RNN_MODELS:
         X_arrays = [_reshape_for_rnn(X) for X in X_arrays]
 
-    # Print data information
     shapes = [
         (X_arrays[0], y_arrays[0], "train"),
         (X_arrays[1], y_arrays[1], "val"),
@@ -110,17 +106,17 @@ def prepare_data(train_set, val_set, test_set, X_cols, y_cols, model_type):
 
 
 def _ensure_1d(array):
-    """Ensure array is 1D"""
+    """Assicura che l'array sia 1D."""
     return array.flatten() if array.ndim > 1 else array
 
 
 def _reshape_for_rnn(X):
-    """Reshape data for RNN models"""
+    """Reshape dei dati per modelli RNN."""
     return X.reshape(X.shape[0], X.shape[1], 1)
 
 
 def create_callbacks(**kwargs):
-    """Create training callbacks with defaults"""
+    """Crea i callback di training con valori di default."""
     defaults = {
         "early_stopping_patience": 5,
         "early_stopping_min_delta": 1e-5,
@@ -170,9 +166,7 @@ def train_model(
     models_path="models",
     exp_name="model",
 ):
-    """Train model with simplified configuration"""
-
-    # Compile model
+    """Addestra il modello con la configurazione specificata."""
     model.compile(
         optimizer=keras.optimizers.Adam(learning_rate=initial_learning_rate),
         loss=keras.losses.Huber(),
@@ -180,10 +174,8 @@ def train_model(
         steps_per_execution=256,
     )
 
-    # Create callbacks
     callbacks = create_callbacks()
 
-    # Train model
     history = model.fit(
         X_train,
         y_train,
@@ -194,8 +186,7 @@ def train_model(
         verbose=1,
     )
 
-    # Salva i pesi del miglior modello alla fine del training
-    # (EarlyStopping con restore_best_weights=True già ripristina i migliori pesi)
+    # EarlyStopping con restore_best_weights=True già ripristina i migliori pesi
     model_save_path = f"{models_path}/{exp_name}.weights.h5"
     os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
     model.save_weights(model_save_path)
@@ -205,11 +196,10 @@ def train_model(
 
 
 def predict_in_batches(model, data, model_type, batch_size=256):
-    """Make predictions with automatic reshaping"""
+    """Esegue le predizioni con reshape automatico in base al tipo di modello."""
     if model_type not in SUPPORTED_MODELS:
         raise ValueError(f"Model type must be one of {SUPPORTED_MODELS}")
 
-    # Prepare data based on model type
     if model_type in RNN_MODELS:
         data_reshaped = _reshape_for_rnn(data.values)
     else:

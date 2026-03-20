@@ -3,15 +3,13 @@ from lib.config import get_raw_file
 
 
 def process_patient_info():
-    """Process patient information file."""
+    """Elabora il file delle informazioni sui pazienti."""
     print("Processing patient_info...")
 
     df_patients = pd.read_csv(get_raw_file("Patient_info.csv"))
 
-    # Extract patient ID as integer
     df_patients["Patient_ID"] = df_patients["Patient_ID"].str[-4:].astype(int)
 
-    # Calculate age at initial measurement date
     df_patients["Initial_measurement_date"] = pd.to_datetime(
         df_patients["Initial_measurement_date"]
     )
@@ -19,36 +17,32 @@ def process_patient_info():
         df_patients["Initial_measurement_date"].dt.year - df_patients["Birth_year"]
     )
 
-    # Encode sex as binary
     sex_mapping = {"F": 0, "M": 1}
     df_patients["Sex"] = df_patients["Sex"].map(sex_mapping)
 
-    # Select and save relevant columns
     df_patients = df_patients[["Patient_ID", "Sex", "Age"]]
     df_patients.to_csv(get_raw_file("Patient_info_corrected.csv"), index=False)
     print("✓ Patient info file processed")
 
 
 def process_biochemical_parameters():
-    """Process biochemical parameters file."""
+    """Elabora il file dei parametri biochimici."""
     print("Processing biochemical parameters...")
 
     df_biochem = pd.read_csv(get_raw_file("Biochemical_parameters.csv"))
 
-    # Extract patient ID as integer
     df_biochem["Patient_ID"] = df_biochem["Patient_ID"].str[-4:].astype(int)
 
-    # Transform from long to wide format
+    # Trasformazione da formato long a wide
     df_biochem_wide = df_biochem.pivot_table(
         index=["Patient_ID", "Reception_date"],
         columns="Name",
         values="Value",
-        aggfunc="first",  # Handle potential duplicates
+        aggfunc="first",
     ).reset_index()
 
     df_biochem_wide.columns.name = None
 
-    # Rename columns to more readable names
     df_biochem = df_biochem_wide.rename(
         columns={
             "Reception_date": "Timestamp",
@@ -60,7 +54,6 @@ def process_biochemical_parameters():
         }
     )
 
-    # Select relevant columns
     df_biochem = df_biochem[
         [
             "Patient_ID",

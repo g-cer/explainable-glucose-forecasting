@@ -1,45 +1,26 @@
 #!/usr/bin/env python3
-"""
-Clarke Error Grid Analysis Utilities
-
-This module provides functions for performing Clarke Error Grid analysis
-on glucose prediction results, including visualization and statistics calculation.
-"""
+"""Utilità per l'analisi Clarke Error Grid."""
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 
 def clarke_error_grid_analysis(ref_values, pred_values, title_string, save_path=None):
-    """
-    Perform Clarke Error Grid analysis and return zone statistics
+    """Esegue l'analisi Clarke Error Grid e restituisce le statistiche per zona.
 
-    Parameters:
-    -----------
-    ref_values : array-like
-        Reference glucose values (mg/dl)
-    pred_values : array-like
-        Predicted glucose values (mg/dl)
-    title_string : str
-        Title for the plot
-    save_path : str, optional
-        Path to save the plot. If None, plot is not saved
+    Args:
+        ref_values: Valori glicemici di riferimento (mg/dL).
+        pred_values: Valori glicemici predetti (mg/dL).
+        title_string: Titolo del grafico.
+        save_path: Percorso di salvataggio. Se None, il grafico non viene salvato.
 
     Returns:
-    --------
-    dict
-        Dictionary containing zone statistics:
-        - zone_counts: Count of points in each zone (A, B, C, D, E)
-        - zone_percentages: Percentage of points in each zone
-        - total_points: Total number of valid points
-        - clinically_acceptable: Percentage in zones A+B
-        - clinically_dangerous: Percentage in zones D+E
+        Dizionario con conteggi per zona, percentuali e accettabilità clinica.
     """
-    # Convert to numpy arrays
     ref_values = np.array(ref_values)
     pred_values = np.array(pred_values)
 
-    # Filter out invalid values
+    # Filtra valori non validi
     valid_mask = (
         ~np.isnan(ref_values)
         & ~np.isnan(pred_values)
@@ -52,7 +33,6 @@ def clarke_error_grid_analysis(ref_values, pred_values, title_string, save_path=
     ref_values = ref_values[valid_mask]
     pred_values = pred_values[valid_mask]
 
-    # Calculate zone statistics
     zone_counts = _calculate_clarke_zones(ref_values, pred_values)
 
     total_points = sum(zone_counts)
@@ -66,7 +46,6 @@ def clarke_error_grid_analysis(ref_values, pred_values, title_string, save_path=
         "clinically_dangerous": (zone_counts[3] + zone_counts[4]) / total_points * 100,
     }
 
-    # Create plot if save_path is provided
     if save_path:
         _create_clarke_error_grid_plot(ref_values, pred_values, title_string, save_path)
         print(f"✓ Clarke Error Grid saved to: {save_path}")
@@ -75,45 +54,31 @@ def clarke_error_grid_analysis(ref_values, pred_values, title_string, save_path=
 
 
 def _calculate_clarke_zones(ref_values, pred_values):
-    """
-    Calculate Clarke Error Grid zone assignments for each point
-
-    Parameters:
-    -----------
-    ref_values : numpy.ndarray
-        Reference glucose values
-    pred_values : numpy.ndarray
-        Predicted glucose values
-
-    Returns:
-    --------
-    list
-        List of 5 integers representing counts in zones A, B, C, D, E
-    """
+    """Calcola l'assegnazione alle zone Clarke per ogni punto."""
     zone = [0] * 5
 
     for i in range(len(ref_values)):
         ref_val = ref_values[i]
         pred_val = pred_values[i]
 
-        # Zone A: Clinically accurate values
+        # Zona A: valori clinicamente accurati
         if (ref_val <= 70 and pred_val <= 70) or (
             pred_val <= 1.2 * ref_val and pred_val >= 0.8 * ref_val
         ):
-            zone[0] += 1  # Zone A
+            zone[0] += 1
 
-        # Zone E: Erroneous values (most dangerous)
+        # Zona E: valori erronei (più pericolosi)
         elif (ref_val >= 180 and pred_val <= 70) or (ref_val <= 70 and pred_val >= 180):
-            zone[4] += 1  # Zone E
+            zone[4] += 1
 
-        # Zone C: Overcorrection values
+        # Zona C: sovracorrezione
         elif ((ref_val >= 70 and ref_val <= 290) and pred_val >= ref_val + 110) or (
             (ref_val >= 130 and ref_val <= 180)
             and (pred_val <= (7 / 5) * ref_val - 182)
         ):
-            zone[2] += 1  # Zone C
+            zone[2] += 1
 
-        # Zone D: Dangerous failure to detect values
+        # Zona D: mancata rilevazione pericolosa
         elif (
             (ref_val >= 240 and (pred_val >= 70 and pred_val <= 180))
             or (ref_val <= 175 / 3 and pred_val <= 180 and pred_val >= 70)
@@ -121,34 +86,20 @@ def _calculate_clarke_zones(ref_values, pred_values):
                 (ref_val >= 175 / 3 and ref_val <= 70) and pred_val >= (6 / 5) * ref_val
             )
         ):
-            zone[3] += 1  # Zone D
+            zone[3] += 1
 
-        # Zone B: Benign errors
+        # Zona B: errori benigni
         else:
-            zone[1] += 1  # Zone B
+            zone[1] += 1
 
     return zone
 
 
 def _create_clarke_error_grid_plot(ref_values, pred_values, title_string, save_path):
-    """
-    Create and save Clarke Error Grid visualization
-
-    Parameters:
-    -----------
-    ref_values : numpy.ndarray
-        Reference glucose values
-    pred_values : numpy.ndarray
-        Predicted glucose values
-    title_string : str
-        Title for the plot
-    save_path : str
-        Path to save the plot
-    """
+    """Crea e salva la visualizzazione Clarke Error Grid."""
     # plt.figure(figsize=(8, 8), dpi=300)
     plt.figure(dpi=300)
 
-    # Plot data points
     plt.scatter(
         ref_values,
         pred_values,
@@ -160,12 +111,9 @@ def _create_clarke_error_grid_plot(ref_values, pred_values, title_string, save_p
         linewidth=0.1,
     )
 
-    # Set labels and title
-    # plt.title(title_string + " Clarke Error Grid", fontsize=16, fontweight="bold")
     plt.xlabel("Concentrazione di riferimento (mg/dL)", fontsize=14)
     plt.ylabel("Concentrazione inferita (mg/dL)", fontsize=14)
 
-    # Add perfect prediction line
     plt.plot(
         [0, 400],
         [0, 400],
@@ -176,30 +124,23 @@ def _create_clarke_error_grid_plot(ref_values, pred_values, title_string, save_p
         label="Perfect prediction",
     )
 
-    # Add zone boundaries
     _add_clarke_zone_boundaries()
-
-    # Add zone labels
     _add_clarke_zone_labels()
-
-    # Configure plot appearance
     plt.xlim([0, 400])
     plt.ylim([0, 400])
     plt.grid(True, alpha=0.3, linestyle="--")
     plt.gca().set_aspect("equal")
     plt.tight_layout()
 
-    # Save plot
     plt.savefig(save_path, dpi=300, bbox_inches="tight", facecolor="white")
     plt.close()
 
 
 def _add_clarke_zone_boundaries():
-    """Add Clarke Error Grid zone boundary lines to the current plot"""
+    """Aggiunge i confini delle zone al grafico corrente."""
     zone_line_color = "black"
     zone_line_width = 1.5
 
-    # Zone boundary lines according to Clarke Error Grid specification
     plt.plot([0, 175 / 3], [70, 70], "-", c=zone_line_color, linewidth=zone_line_width)
     plt.plot(
         [175 / 3, 400 / 1.2],
@@ -221,16 +162,14 @@ def _add_clarke_zone_boundaries():
 
 
 def _add_clarke_zone_labels():
-    """Add zone labels (A, B, C, D, E) to the current plot"""
+    """Aggiunge le etichette delle zone (A, B, C, D, E) al grafico corrente."""
     zone_font_size = 15
     zone_font_weight = "bold"
 
-    # Zone A
     plt.text(
         30, 15, "A", fontsize=zone_font_size, fontweight=zone_font_weight, ha="center"
     )
 
-    # Zone B (appears in two regions)
     plt.text(
         370, 220, "B", fontsize=zone_font_size, fontweight=zone_font_weight, ha="center"
     )
@@ -238,7 +177,6 @@ def _add_clarke_zone_labels():
         290, 370, "B", fontsize=zone_font_size, fontweight=zone_font_weight, ha="center"
     )
 
-    # Zone C (appears in two regions)
     plt.text(
         160, 370, "C", fontsize=zone_font_size, fontweight=zone_font_weight, ha="center"
     )
@@ -246,7 +184,6 @@ def _add_clarke_zone_labels():
         160, 15, "C", fontsize=zone_font_size, fontweight=zone_font_weight, ha="center"
     )
 
-    # Zone D (appears in two regions)
     plt.text(
         30, 140, "D", fontsize=zone_font_size, fontweight=zone_font_weight, ha="center"
     )
@@ -254,7 +191,6 @@ def _add_clarke_zone_labels():
         370, 90, "D", fontsize=zone_font_size, fontweight=zone_font_weight, ha="center"
     )
 
-    # Zone E (appears in two regions)
     plt.text(
         30, 370, "E", fontsize=zone_font_size, fontweight=zone_font_weight, ha="center"
     )
@@ -266,28 +202,5 @@ def _add_clarke_zone_labels():
 def get_clarke_error_grid_stats(
     ref_values, pred_values, title_string="", show_plot=True, save_path=None
 ):
-    """
-    Enhanced Clarke Error Grid analysis with detailed statistics
-
-    This function is a wrapper around clarke_error_grid_analysis for backward compatibility
-    with existing notebooks and scripts.
-
-    Parameters:
-    -----------
-    ref_values : array-like
-        Reference glucose values
-    pred_values : array-like
-        Predicted glucose values
-    title_string : str, optional
-        Title for the plot
-    show_plot : bool, optional
-        Whether to show the plot (deprecated, use save_path instead)
-    save_path : str, optional
-        Path to save the plot
-
-    Returns:
-    --------
-    dict
-        Dictionary containing Clarke Error Grid statistics
-    """
+    """Wrapper per compatibilità con notebook esistenti."""
     return clarke_error_grid_analysis(ref_values, pred_values, title_string, save_path)
