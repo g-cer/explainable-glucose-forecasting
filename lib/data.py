@@ -121,7 +121,7 @@ def print_results(df):
     def print_metrics(title, samples, maes, mapes, rmses):
         """Stampa le metriche formattate per una condizione."""
         if title != "Cumulative":
-            print("~" * 10)
+            print("-" * 40)
         print(title)
         print(f"Samples: {samples}")
         if maes:  # Only print if we have data

@@ -6,7 +6,6 @@ from datetime import datetime
 
 def load_data(file_path):
     """Carica e prepara il dataset delle misurazioni glicemiche."""
-    print(f"Loading dataset '{file_path}'...")
     df_glucose = pd.read_csv(file_path)
 
     df_glucose["Timestamp"] = pd.to_datetime(
@@ -15,8 +14,7 @@ def load_data(file_path):
 
     df_glucose["Patient_ID"] = df_glucose["Patient_ID"].str[-4:]
 
-    print(f"Dataset loaded successfully. Shape: {df_glucose.shape}")
-    print(f"Unique patients: {df_glucose['Patient_ID'].nunique()}")
+    print(f"Loaded {df_glucose.shape[0]} records, {df_glucose['Patient_ID'].nunique()} patients")
     return df_glucose
 
 
@@ -62,13 +60,12 @@ def resample_glucose_data(df, freq="15min", tolerance="7min"):
         resampled["Patient_ID"] = patient_id
         resampled_list.append(resampled)
 
-    print("Resampling completed successfully!")
+    print("Resampling completed.")
     return resampled_list
 
 
 def calculate_patient_statistics(resampled_data):
     """Calcola statistiche per paziente dai dati ricampionati."""
-    print("Calculating patient statistics...")
 
     amount_of_data_per_patient = pd.DataFrame(
         [
@@ -115,23 +112,22 @@ def filter_patients_by_days(df_glucose_resampled, patient_stats, min_days=30):
 
 def save_preprocessed_data(data, output_path):
     """Salva i dati preprocessati su file CSV."""
-    print(f"Saving preprocessed dataset to '{output_path}'...")
     data.to_csv(output_path, index=False)
-    print("Dataset saved successfully!")
+    print(f"Dataset saved to '{output_path}'.")
 
 
 def print_final_statistics(data):
     """Stampa le statistiche finali del dataset preprocessato."""
-    print("\n" + "=" * 50)
+    print("\n" + "=" * 60)
     print("PREPROCESSING RESULTS")
-    print("=" * 50)
+    print("=" * 60)
     print(f"Final dataset shape: {data.shape}")
     print(f"Number of patients: {data['Patient_ID'].nunique()}")
     print(f"Missing values: {data['Measurement'].isnull().sum()}")
     print(
         f"Missing values percentage: {data['Measurement'].isnull().sum() / len(data) * 100:.2f}%"
     )
-    print("=" * 50)
+    print("=" * 60)
 
 
 def remove_out_of_range_measurements(df, min_val=40, max_val=400):
@@ -149,7 +145,7 @@ def main():
     """Pipeline principale di preprocessing."""
     start_time = time.time()
     print(f"Starting preprocessing at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 50)
+    print("=" * 60)
 
     try:
         from lib.config import get_raw_file

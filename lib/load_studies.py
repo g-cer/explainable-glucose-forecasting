@@ -18,7 +18,7 @@ def load_and_analyze_study(model_name, results_dir="tuning/results"):
     study_path = f"{results_dir}/{model_name}_optuna_study.pkl"
 
     if not os.path.exists(study_path):
-        print(f"❌ Studio non trovato: {study_path}")
+        print(f"ERROR: Studio non trovato: {study_path}")
         return None
 
     with open(study_path, "rb") as f:
@@ -79,55 +79,31 @@ def compare_models(results_dir="tuning/results"):
             )
 
     if models:
-        print(f"\n{'='*80}")
+        print(f"\n{'='*60}")
         print("CONFRONTO MODELLI")
-        print(f"{'='*80}")
+        print(f"{'='*60}")
 
         df = pd.DataFrame(models)
         print(df.to_string(index=False))
 
         best_model = min(models, key=lambda x: float(x["Best MAE"]))
         print(
-            f"\n🏆 MODELLO MIGLIORE: {best_model['Modello']} con MAE = {best_model['Best MAE']}"
+            f"\nBEST MODEL: {best_model['Modello']} - MAE = {best_model['Best MAE']}"
         )
     else:
-        print("❌ Nessun studio Optuna trovato.")
+        print("ERROR: Nessun studio Optuna trovato.")
 
 
 def main():
     """Funzione principale."""
     print("ANALISI STUDI OPTUNA SALVATI")
-    print("=" * 80)
+    print("=" * 60)
 
     for model_name in ["xgb", "lgb"]:
         study = load_and_analyze_study(model_name)
 
     compare_models()
 
-    print(f"\n{'='*80}")
-    print("COME UTILIZZARE I PARAMETRI OTTIMALI:")
-    print(f"{'='*80}")
-    print(
-        """
-# Esempio per XGBoost:
-import pickle
-import xgboost as xgb
-
-# Carica lo studio
-with open('tuning/results/xgb_optuna_study.pkl', 'rb') as f:
-    study = pickle.load(f)
-
-# Ottieni parametri ottimali
-best_params = study.best_params
-print(f"Best MAE: {study.best_value:.4f}")
-print(f"Best params: {best_params}")
-
-# Crea modello con parametri ottimali
-# (ricorda di combinare con parametri base se necessario)
-model = xgb.XGBRegressor(**combined_params)
-model.fit(X_train, y_train)
-"""
-    )
 
 
 if __name__ == "__main__":

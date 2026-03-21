@@ -22,7 +22,7 @@ def process_patient_info():
 
     df_patients = df_patients[["Patient_ID", "Sex", "Age"]]
     df_patients.to_csv(get_raw_file("Patient_info_corrected.csv"), index=False)
-    print("✓ Patient info file processed")
+    print("Patient info file processed.")
 
 
 def process_biochemical_parameters():
@@ -69,7 +69,7 @@ def process_biochemical_parameters():
     df_biochem.to_csv(
         get_raw_file("Biochemical_parameters_corrected.csv"), index=False
     )
-    print("✓ Biochemical parameters file processed")
+    print("Biochemical parameters file processed.")
 
 
 if __name__ == "__main__":

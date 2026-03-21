@@ -4,8 +4,6 @@ from lib.config import get_raw_file
 
 def load_datasets():
     """Carica i dataset corretti (pazienti, glicemia, parametri biochimici)."""
-    print("Loading datasets...")
-
     df_patients = pd.read_csv(get_raw_file("Patient_info_corrected.csv"))
     df_glucose = pd.read_csv(get_raw_file("Glucose_measurements_corrected.csv"))
     df_biochem = pd.read_csv(get_raw_file("Biochemical_parameters_corrected.csv"))
@@ -13,9 +11,7 @@ def load_datasets():
     df_glucose["Timestamp"] = pd.to_datetime(df_glucose["Timestamp"])
     df_biochem["Timestamp"] = pd.to_datetime(df_biochem["Timestamp"])
 
-    print(f"✓ Loaded {len(df_patients)} patients")
-    print(f"✓ Loaded {len(df_glucose)} glucose measurements")
-    print(f"✓ Loaded {len(df_biochem)} biochemical parameters")
+    print(f"Loaded {len(df_patients)} patients, {len(df_glucose)} glucose, {len(df_biochem)} biochem records")
 
     return df_patients, df_glucose, df_biochem
 
@@ -50,9 +46,6 @@ def process_all_patients(df_glucose, df_biochem):
     results_list = []
 
     for i, patient_id in enumerate(patients, 1):
-        if i % 10 == 0 or i == len(patients):
-            print(f"Processing patient {patient_id} ({i}/{len(patients)})")
-
         patient_result = merge_patient_data(patient_id, df_glucose, df_biochem)
 
         if patient_result is not None:
@@ -64,36 +57,34 @@ def process_all_patients(df_glucose, df_biochem):
     combined_data.drop(columns="Patient_ID_y", inplace=True)
     combined_data.rename(columns={"Patient_ID_x": "Patient_ID"}, inplace=True)
 
-    print(f"✓ Successfully merged data for {len(combined_data)} measurements")
+    print(f"Merged data for {len(combined_data)} measurements.")
 
     return combined_data
 
 
 def add_static_features(glucose_biochem_data, df_patients):
     """Aggiunge le feature statiche del paziente (età, sesso) al dataset."""
-    print("\nAdding static patient features...")
-
     full_dataset = glucose_biochem_data.merge(df_patients, on="Patient_ID", how="left")
 
     ordered_cols = ["Patient_ID", "Sex", "Age", "Timestamp", "Measurement"]
     other_cols = [col for col in full_dataset.columns if col not in ordered_cols]
     full_dataset = full_dataset[ordered_cols + other_cols]
 
-    print(f"✓ Final dataset shape: {full_dataset.shape}")
+    print(f"Final dataset shape: {full_dataset.shape}")
 
     return full_dataset
 
 
 def save_final_dataset(dataset, output_path):
     """Salva il dataset arricchito finale."""
-    print(f"\nSaving final dataset to: {output_path}")
     dataset.to_csv(output_path, index=False)
-    print("✓ Dataset saved successfully")
+    print(f"Dataset saved to: {output_path}")
 
 
 if __name__ == "__main__":
-    print("🔄 ADDING FEATURES TO GLUCOSE MEASUREMENTS")
-    print("=" * 50)
+    print("=" * 60)
+    print("ADDING FEATURES TO GLUCOSE MEASUREMENTS")
+    print("=" * 60)
 
     df_patients, df_glucose, df_biochem = load_datasets()
     glucose_biochem_data = process_all_patients(df_glucose, df_biochem)
@@ -103,4 +94,4 @@ if __name__ == "__main__":
         get_raw_file("Glucose_measurements_with_static.csv"),
     )
 
-    print("\n✅ Feature addition completed!")
+    print("\nFeature addition completed.")

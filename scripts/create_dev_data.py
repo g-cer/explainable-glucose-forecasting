@@ -87,7 +87,10 @@ def filter_parquet_splits(dev_patients):
 
 
 def main():
-    print("=== Creating dev dataset ===\n")
+    print("=" * 60)
+    print("CREATING DEV DATASET")
+    print("=" * 60)
+    print()
 
     # Sample patients
     dev_patients, df_patient_info = get_dev_patients()

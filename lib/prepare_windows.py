@@ -17,13 +17,10 @@ SHIFT_TOLERANCE = "1m"
 
 def load_glucose_with_biochemical_features(file_path):
     """Carica le misurazioni glicemiche arricchite con feature biochimiche."""
-    print(f"Loading enriched glucose measurements from '{file_path}'...")
-
     df = pl.read_csv(file_path)
     df = df.with_columns(pl.col("Timestamp").str.to_datetime())
 
-    print(f"✓ Dataset loaded successfully. Shape: {df.shape}")
-    print(f"✓ Columns: {df.columns}")
+    print(f"Dataset loaded. Shape: {df.shape}")
 
     return df
 
@@ -145,7 +142,7 @@ def save_static_splits(
     with open(f"{output_dir}/metadata.json", "w") as f:
         json.dump(metadata, f, indent=2)
 
-    print(f"\n✅ Datasets saved to {output_dir}/")
+    print(f"\nDatasets saved to {output_dir}/")
     for dataset, name in datasets:
         print(f"   {name.capitalize()} set: {len(dataset)} samples")
 
@@ -169,7 +166,8 @@ def prepare_static_windowed_data(
         from lib.config import get_raw_file
         data_path = get_raw_file("Glucose_measurements_with_static.csv")
 
-    print("🔄 PREPARING WINDOWED DATA WITH BIOCHEMICAL FEATURES")
+    print("=" * 60)
+    print("PREPARING WINDOWED DATA WITH BIOCHEMICAL FEATURES")
     print("=" * 60)
 
     enriched_data = load_glucose_with_biochemical_features(data_path)
@@ -177,9 +175,9 @@ def prepare_static_windowed_data(
     all_patients = (
         enriched_data.select("Patient_ID").unique().to_pandas()["Patient_ID"].tolist()
     )
-    print(f"\n📊 Found {len(all_patients)} patients in dataset")
+    print(f"\nFound {len(all_patients)} patients in dataset")
 
-    print("\n🔄 Creating windowed features for all patients...")
+    print("\nCreating windowed features for all patients...")
     patient_dfs = []
 
     for i, patient_id in enumerate(sorted(all_patients)):
@@ -191,7 +189,7 @@ def prepare_static_windowed_data(
             patient_dfs.append(patient_df)
 
     df = pd.concat(patient_dfs, ignore_index=True)
-    print(f"✓ Combined dataset shape: {df.shape}")
+    print(f"Combined dataset shape: {df.shape}")
 
     lag_cols = [col for col in df.columns if "lag" in col]
     biochemical_cols = [
@@ -203,19 +201,19 @@ def prepare_static_windowed_data(
     X_cols = lag_cols + static_cols
     y_cols = [TARGET_COL]
 
-    print(f"\n📋 Feature summary:")
+    print(f"\nFeature summary:")
     print(f"   Lag features ({len(lag_cols)}): {lag_cols}")
     print(f"   Static features ({len(static_cols)}): {static_cols}")
     print(f"   Target column: {y_cols}")
 
     if scale:
-        print("\n⚖️ Scaling glucose features...")
+        print("\nScaling glucose features...")
         df = scale_data(df, lag_cols + y_cols)
 
-    print("\n🔀 Performing stratified group split...")
+    print("\nPerforming stratified group split...")
     train_idx, val_idx, test_idx = stratified_group_train_val_test_split(df)
     validate_group_split(df, train_idx, val_idx, test_idx, "Patient_ID")
-    print("✓ Group split validation passed")
+    print("Group split validation passed.")
 
     print_split_info(df, train_idx, val_idx, test_idx)
 
@@ -235,4 +233,4 @@ if __name__ == "__main__":
 
     save_static_splits(train_set, val_set, test_set, X_cols, y_cols)
 
-    print("\n🎉 Windowed data preparation with biochemical features completed!")
+    print("\nWindowed data preparation completed.")

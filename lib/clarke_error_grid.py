@@ -48,7 +48,7 @@ def clarke_error_grid_analysis(ref_values, pred_values, title_string, save_path=
 
     if save_path:
         _create_clarke_error_grid_plot(ref_values, pred_values, title_string, save_path)
-        print(f"✓ Clarke Error Grid saved to: {save_path}")
+        print(f"Clarke Error Grid saved to: {save_path}")
 
     return stats
 
