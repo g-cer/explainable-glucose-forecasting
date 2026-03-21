@@ -6,9 +6,7 @@ scikit-learn
 xgboost
 lightgbm
 shap
-torch
 seaborn
 matplotlib
 optuna
-plotly
 statsmodels
