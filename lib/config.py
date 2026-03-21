@@ -1,6 +1,6 @@
 """Configurazione centralizzata per la modalità dev/produzione."""
 
-DEV_MODE = True
+DEV_MODE = False
 DEV_PATIENTS = 20
 
 _RAW_DATA_DIR = "data/T1DiabetesGranada"
