@@ -62,6 +62,7 @@ Hyperparameter tuning uses **Optuna** (Bayesian optimization, 40 trials) for gra
 lib/            # Reusable Python modules
 notebooks/      # 13 sequential pipeline notebooks
 scripts/        # Utility scripts
+docs/           # Thesis manuscript (thesis.pdf)
 data/           # Dataset (not tracked in git)
     T1DiabetesGranada/
     split_sets/
@@ -129,3 +130,5 @@ For quick iteration on a subset of patients, set `DEV_MODE = True` in `lib/confi
 ## Citation
 
 This project originated as a Bachelor's thesis (*Tesi di Laurea Triennale*) in Computer Science at Università degli Studi di Salerno by Giovanni Cerchia (supervised by Prof. Fabio Palomba, SeSa Lab).
+
+The full manuscript is available at [`docs/thesis.pdf`](docs/thesis.pdf).
